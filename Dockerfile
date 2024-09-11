@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install .NET 7 Runtime alongside .NET 6 SDK
 COPY --from=mcr.microsoft.com/dotnet/sdk:7.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
-
+COPY --from=mcr.microsoft.com/dotnet/sdk:8.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
 # Install ClamAV
 RUN apt-get update && apt-get install -y clamav clamav-daemon
 
