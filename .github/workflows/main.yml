@@ -6,11 +6,12 @@ on:
     branches: [master]
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  schedule:
+    - cron: '0 0 * * 6'
 
 jobs:
   docker:
     runs-on: ubuntu-latest
-    if: github.ref_type != 'tag'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -32,7 +33,7 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/playground-service
           tags: |
-            type=sha
+            type=raw,value={{date 'YYYYMMDD-hhmmss' tz='Asia/Tokyo'}}
             # set latest tag for default branch
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push
@@ -45,22 +46,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy:
-    needs: docker
-    if: ${{ !(failure() || cancelled()) }}
-    runs-on: ubuntu-latest
-    env:
-      ENVIRONMENT: ${{ github.ref_type == 'tag' && 'production' || 'development' }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set short git commit SHA
-        id: vars
-        run: |
-          calculatedSha=$(git rev-parse --short ${{ github.sha }})
-          echo "short_sha=$calculatedSha" >> "$GITHUB_OUTPUT"
       - name: Deploy
         uses: actions/github-script@v6
+        env:
+          ENVIRONMENT: ${{ github.ref_type == 'tag' && 'production' || 'development' }}
         with:
           github-token: ${{ secrets.WORKFLOW_DISPATCH }}
           script: |
@@ -72,6 +61,6 @@ jobs:
               inputs: {
                 env: '${{ env.ENVIRONMENT }}',
                 appName: 'playground-service',
-                commit_sha: 'sha-${{ steps.vars.outputs.short_sha }}',
+                commit_sha: '${{ steps.meta.outputs.version }}',
               }
             })

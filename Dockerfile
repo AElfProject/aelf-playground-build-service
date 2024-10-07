@@ -29,5 +29,4 @@ RUN dotnet new globaljson --sdk-version $$DOTNET_6 --force
 # Expose port 7020
 EXPOSE 7020
 
-# Minimal change to run freshclam before starting the service
-ENTRYPOINT ["sh", "-c", "freshclam && /usr/share/dotnet/dotnet PlaygroundService.dll"]
+ENTRYPOINT ["/usr/share/dotnet/dotnet", "PlaygroundService.dll"]
