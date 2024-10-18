@@ -60,7 +60,7 @@ public class PlaygroundGrain : Grain, IPlaygroundGrain
 
     public async Task<(bool, string)> BuildProject(ZipFileDto dto)
     {
-        var (success, message) = await ExtractThen(dto, async () => await Build(_workspacePath));
+        var (success, message) = await Task.Run(async () => await ExtractThen(dto, async () => await Build(_workspacePath)));
         
         DeactivateOnIdle();
         
@@ -69,7 +69,7 @@ public class PlaygroundGrain : Grain, IPlaygroundGrain
     
     public async Task<(bool, string)> TestProject(ZipFileDto dto)
     {
-        var (success, message) = await ExtractThen(dto, async () => await Test(_workspacePath));
+        var (success, message) = await Task.Run(async () => await ExtractThen(dto, async () => await Test(_workspacePath)));
         
         DeactivateOnIdle();
         
