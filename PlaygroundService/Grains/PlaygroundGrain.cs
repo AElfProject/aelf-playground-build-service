@@ -9,13 +9,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Orleans;
-using Orleans.Concurrency;
 using PlaygroundService.Dtos;
 using PlaygroundService.Utilities;
 
 namespace PlaygroundService.Grains;
 
-[StatelessWorker(10)] // max 10 activations per silo
 public class PlaygroundGrain : Grain, IPlaygroundGrain
 {
     private readonly ILogger<PlaygroundGrain> _logger;
@@ -60,7 +58,7 @@ public class PlaygroundGrain : Grain, IPlaygroundGrain
 
     public async Task<(bool, string)> BuildProject(ZipFileDto dto)
     {
-        var (success, message) = await ExtractThen(dto, async () => await Build(_workspacePath));
+        var (success, message) = await Task.Run(() => ExtractThen(dto, async () => await Build(_workspacePath)));
         
         DeactivateOnIdle();
         
@@ -69,7 +67,7 @@ public class PlaygroundGrain : Grain, IPlaygroundGrain
     
     public async Task<(bool, string)> TestProject(ZipFileDto dto)
     {
-        var (success, message) = await ExtractThen(dto, async () => await Test(_workspacePath));
+        var (success, message) = await Task.Run(() => ExtractThen(dto, async () => await Test(_workspacePath)));
         
         DeactivateOnIdle();
         
