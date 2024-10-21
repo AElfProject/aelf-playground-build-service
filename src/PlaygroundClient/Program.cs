@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
-using GrainInterfaces;
 using Client.Services;
 using Microsoft.AspNetCore.Mvc;
+using GrainInterfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host
@@ -33,6 +33,14 @@ app.UseHttpsRedirection();
 app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, IFormFile file) =>
 {
     // TODO
+    var friend = _client.GetGrain<IHelloGrain>("friend");
+    var result = await friend.SayHello("Good morning!");
+    Console.WriteLine($"""
+
+        {result}
+
+        """);
+
 })
 .DisableAntiforgery();
 
