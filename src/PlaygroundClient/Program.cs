@@ -16,7 +16,8 @@ builder.Host
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<IVirusScanService, VirusScanService>();
+builder.Services.AddTransient<IProcess, BuildProcess>();
+builder.Services.AddTransient<IProcess, TestProcess>();
 
 var app = builder.Build();
 
@@ -33,7 +34,7 @@ app.UseHttpsRedirection();
 app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, IFormFile file) =>
 {
     var grain = _client.GetGrain<IProcessGrain>(Guid.NewGuid());
-    await grain.StartAsync();
+    await grain.StartAsync(ProcessType.Build);
 
     var status = await grain.GetStatusAsync();
 
