@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Client.Services;
 using Microsoft.AspNetCore.Mvc;
 using GrainInterfaces;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host
@@ -32,8 +33,15 @@ app.UseHttpsRedirection();
 // upload zip file and return the extracted files
 app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, IFormFile file) =>
 {
-    var grain = _client.GetGrain<IProcessGrain>(Guid.NewGuid());
-    await grain.StartAsync();
+    Console.WriteLine("Build started");
+
+    var grain = _client.GetGrain<IBuildGrain>(Guid.NewGuid());
+    BuildRequestDto request = new BuildRequestDto
+    {
+        ZipFile = await file.GetBytesAsync()
+    };
+
+    await grain.StartAsync(request);
 
     var status = await grain.GetStatusAsync();
 
@@ -43,7 +51,11 @@ app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, I
         status = await grain.GetStatusAsync();
     }
 
-    return "Build completed";
+    Console.WriteLine("Build completed");
+
+    var result = await grain.GetResultAsync();
+
+    return result;
 
 })
 .DisableAntiforgery();

@@ -1,8 +1,9 @@
 namespace GrainInterfaces;
 
-public interface IProcessGrain : IGrainWithGuidKey
+public interface IProcessGrain<TRequest, TResponse> : IGrainWithGuidKey
 {
-    Task StartAsync();
+    Task StartAsync(TRequest request);
     Task<TaskStatus?> GetStatusAsync();
     Task StopAsync();
+    Task<TResponse?> GetResultAsync();
 }

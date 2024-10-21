@@ -1,14 +1,19 @@
+using Orleans.Concurrency;
 using GrainInterfaces;
 
 // https://github.com/dotnet/orleans/issues/6389#issuecomment-597567547
 namespace Grains;
-public class ProcessGrain : Grain, IProcessGrain
-{
-    private Task _myLongRunningTask;
-    private CancellationTokenSource _cancellation = new CancellationTokenSource();
 
-    public Task StartAsync()
+[StatelessWorker]
+public class ProcessGrain<TRequest, TResponse> : Grain, IProcessGrain<TRequest, TResponse>
+{
+    protected Task<TResponse?> _myLongRunningTask;
+    protected TRequest _request;
+    protected CancellationTokenSource _cancellation = new CancellationTokenSource();
+
+    public Task StartAsync(TRequest request)
     {
+        _request = request;
         // option 1: let it run in the current grain activation scheduler
         // _myLongRunningTask = Task.Factory.StartNew(_ => DoLongRunningWorkAsync(), null, _cancellation.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Current).Unwrap();
 
@@ -29,7 +34,7 @@ public class ProcessGrain : Grain, IProcessGrain
         return Task.CompletedTask;
     }
 
-    private async Task DoLongRunningWorkAsync()
+    protected virtual async Task<TResponse?> DoLongRunningWorkAsync()
     {
         try
         {
@@ -44,5 +49,12 @@ public class ProcessGrain : Grain, IProcessGrain
         {
             // cleanup
         }
+
+        return default;
+    }
+
+    public Task<TResponse?> GetResultAsync()
+    {
+        return _myLongRunningTask;
     }
 }
