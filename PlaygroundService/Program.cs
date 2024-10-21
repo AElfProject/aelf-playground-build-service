@@ -50,7 +50,6 @@ public class Program
                     {
                         opts.ResponseTimeout = TimeSpan.FromMinutes(30);
                     })
-                    .UseKubernetesHosting()
                 )
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
