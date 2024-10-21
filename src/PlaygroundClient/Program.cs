@@ -93,9 +93,32 @@ app.MapGet("/playground/templates", () =>
     return new List<string> { "aelf", "aelf-lottery", "aelf-nft-sale", "aelf-simple-dao" };
 });
 
-app.MapGet("/playground/template", ([FromServices] IClusterClient _client, string template, string templateName) =>
+app.MapGet("/playground/template", async ([FromServices] IClusterClient _client, string template, string templateName) =>
 {
-    // TODO
+    Console.WriteLine("Template started");
+
+    var grain = _client.GetGrain<ITemplateGrain>(Guid.Empty); // stateless worker: https://learn.microsoft.com/en-us/dotnet/orleans/grains/stateless-worker-grains
+    TemplateRequestDto request = new TemplateRequestDto
+    {
+        Template = template,
+        TemplateName = templateName
+    };
+
+    await grain.StartAsync(request);
+
+    var status = await grain.GetStatusAsync();
+
+    while (status != TaskStatus.RanToCompletion)
+    {
+        await Task.Delay(1000);
+        status = await grain.GetStatusAsync();
+    }
+
+    Console.WriteLine("Template completed");
+
+    var result = await grain.GetResultAsync();
+
+    return result;
 });
 
 app.MapPost("/playground/share/create", ([FromServices] IClusterClient _client, IFormFile file) =>
