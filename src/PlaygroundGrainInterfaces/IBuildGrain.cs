@@ -5,14 +5,14 @@ public interface IBuildGrain : IProcessGrain<BuildRequestDto, BuildResponseDto>
 }
 
 [GenerateSerializer]
-public class BuildRequestDto
+public sealed class BuildRequestDto
 {
-    [Id(0)]
+    [Id(0), Immutable]
     public byte[] ZipFile { get; set; }
 }
 
 [GenerateSerializer]
-public class BuildResponseDto
+public sealed class BuildResponseDto
 {
     [Id(0)]
     public bool Status { get; set; }
