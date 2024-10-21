@@ -60,9 +60,31 @@ app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, I
 })
 .DisableAntiforgery();
 
-app.MapPost("/playground/test", ([FromServices] IClusterClient _client, IFormFile file) =>
+app.MapPost("/playground/test", async ([FromServices] IClusterClient _client, IFormFile file) =>
 {
-    // TODO
+    Console.WriteLine("Test started");
+
+    var grain = _client.GetGrain<ITestGrain>(Guid.Empty); // stateless worker: https://learn.microsoft.com/en-us/dotnet/orleans/grains/stateless-worker-grains
+    TestRequestDto request = new TestRequestDto
+    {
+        ZipFile = await file.GetBytesAsync()
+    };
+
+    await grain.StartAsync(request);
+
+    var status = await grain.GetStatusAsync();
+
+    while (status != TaskStatus.RanToCompletion)
+    {
+        await Task.Delay(1000);
+        status = await grain.GetStatusAsync();
+    }
+
+    Console.WriteLine("Test completed");
+
+    var result = await grain.GetResultAsync();
+
+    return result;
 })
 .DisableAntiforgery();
 
