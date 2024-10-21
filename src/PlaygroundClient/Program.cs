@@ -35,7 +35,7 @@ app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, I
 {
     Console.WriteLine("Build started");
 
-    var grain = _client.GetGrain<IBuildGrain>(Guid.NewGuid());
+    var grain = _client.GetGrain<IBuildGrain>(Guid.Empty); // stateless worker: https://learn.microsoft.com/en-us/dotnet/orleans/grains/stateless-worker-grains
     BuildRequestDto request = new BuildRequestDto
     {
         ZipFile = await file.GetBytesAsync()
