@@ -8,6 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host
     .UseOrleansClient(client =>
     {
+        client.Configure<ClusterOptions>(options =>
+        {
+            options.ClusterId = Environment.GetEnvironmentVariable("ORLEANS_CLUSTER_ID") ?? "default";
+            options.ServiceId = Environment.GetEnvironmentVariable("ORLEANS_SERVICE_ID") ?? "default";
+        });
+
         client.UseZooKeeperClustering(options =>
         {
             // for development, start services using docker compose.
