@@ -32,19 +32,23 @@ app.UseHttpsRedirection();
 // upload zip file and return the extracted files
 app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, IFormFile file) =>
 {
-    // TODO
-    var friend = _client.GetGrain<IHelloGrain>("friend");
-    var result = await friend.SayHello("Good morning!");
-    Console.WriteLine($"""
+    var grain = _client.GetGrain<IProcessGrain>(Guid.NewGuid());
+    await grain.StartAsync();
 
-        {result}
+    var status = await grain.GetStatusAsync();
 
-        """);
+    while (status != TaskStatus.RanToCompletion)
+    {
+        await Task.Delay(1000);
+        status = await grain.GetStatusAsync();
+    }
+
+    return "Build completed";
 
 })
 .DisableAntiforgery();
 
-app.MapPost("/playground/test", async ([FromServices] IClusterClient _client, IFormFile file) =>
+app.MapPost("/playground/test", ([FromServices] IClusterClient _client, IFormFile file) =>
 {
     // TODO
 })
@@ -55,23 +59,14 @@ app.MapGet("/playground/templates", () =>
     return new List<string> { "aelf", "aelf-lottery", "aelf-nft-sale", "aelf-simple-dao" };
 });
 
-app.MapGet("/playground/template", async ([FromServices] IClusterClient _client, string template, string templateName) =>
+app.MapGet("/playground/template", ([FromServices] IClusterClient _client, string template, string templateName) =>
 {
     // TODO
 });
 
-app.MapPost("/playground/share/create", async ([FromServices] IVirusScanService _virusScanService, IFormFile file) =>
+app.MapPost("/playground/share/create", ([FromServices] IClusterClient _client, IFormFile file) =>
 {
-    // get virus scan service
-    var result = await _virusScanService.IsFileInfected(await file.GetBytesAsync());
-    if (!result)
-    {
-        return "File is infected";
-    }
-
-    // TODO: save to storage
-
-    return "File is clean";
+    // TODO
 })
 .DisableAntiforgery();
 
