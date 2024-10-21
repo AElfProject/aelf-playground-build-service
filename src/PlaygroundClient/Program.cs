@@ -8,7 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host
     .UseOrleansClient(client =>
     {
-        client.UseLocalhostClustering();
+        client.UseZooKeeperClustering(options =>
+        {
+            // for development, start services using docker compose.
+            options.ConnectionString = Environment.GetEnvironmentVariable("ASPNETCORE_ZOOKEEPER_HOST") ?? "localhost:2181";
+        });
     })
     .ConfigureLogging(logging => logging.AddConsole());
 
