@@ -11,9 +11,9 @@ using GrainInterfaces;
 
 namespace Grains;
 
-public class CodeCompilerGrain : Grain, ICodeCompilerGrain
+public sealed class CodeCompilerGrain : Grain, ICodeCompilerGrain
 {
-    public async Task<string> CompileCSharpCode(string sourceCode)
+    public async ValueTask<string> CompileCSharpCode(string sourceCode)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode);
 
