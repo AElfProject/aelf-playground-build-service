@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Orleans;
+using GrainInterfaces;
+
+namespace Grains;
 
 public class CodeCompilerGrain : Grain, ICodeCompilerGrain
 {
