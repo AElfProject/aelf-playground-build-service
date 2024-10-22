@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using GrainInterfaces;
 using Microsoft.Extensions.Logging;
 using Orleans.Configuration;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host
@@ -64,6 +65,22 @@ app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, I
 
     return result;
 
+})
+.DisableAntiforgery();
+
+// upload zip file and return the extracted files
+app.MapPost("/playground/buildWithRoslyn", async ([FromServices] IClusterClient _client, [FromForm] string code) =>
+{
+    var timer = Stopwatch.StartNew();
+    Console.WriteLine("Build started at " + DateTime.Now);
+
+    var grain = _client.GetGrain<ICodeCompilerGrain>(Guid.NewGuid().ToString());
+
+    var result = await grain.CompileCSharpCode(code);
+
+    Console.WriteLine($"Build completed in {timer.ElapsedMilliseconds}ms");
+
+    return result;
 })
 .DisableAntiforgery();
 
