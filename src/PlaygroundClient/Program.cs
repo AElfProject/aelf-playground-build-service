@@ -38,6 +38,10 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+// host index.html file
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 // upload zip file and return the extracted files
 app.MapPost("/playground/build", async ([FromServices] IClusterClient _client, IFormFile file) =>
 {
