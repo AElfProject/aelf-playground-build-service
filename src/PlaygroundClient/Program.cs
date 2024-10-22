@@ -80,11 +80,17 @@ app.MapPost("/playground/buildWithRoslyn", async ([FromServices] IClusterClient 
 
     var grain = _client.GetGrain<ICodeCompilerGrain>(Guid.NewGuid().ToString());
 
-    var result = await grain.CompileCSharpCode(code);
-
-    Console.WriteLine($"Build completed in {timer.ElapsedMilliseconds}ms");
-
-    return result;
+    try
+    {
+        var result = await grain.CompileCSharpCode(code);
+        Console.WriteLine("Build completed at " + DateTime.Now);
+        return result;
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine("Build failed at " + DateTime.Now);
+        return e.Message;
+    }
 })
 .DisableAntiforgery();
 

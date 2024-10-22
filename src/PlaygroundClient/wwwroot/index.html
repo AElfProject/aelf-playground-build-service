@@ -65,9 +65,8 @@
         })
           .then((response) => response.text())
           .then((data) => {
-            if (data.error) {
-              document.getElementById("result").textContent =
-                "Error: " + data.error;
+            if (data.includes("failed")) {
+              document.getElementById("result").textContent = "Error: " + data;
             } else {
               document.getElementById("result").textContent =
                 "Compiled DLL: " + data;
