@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /app
+COPY . ./
+RUN dotnet publish src/PlaygroundSilo -c Release -o out
+
+# Use the official .NET 8 sdk image as a runtime stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS runtime
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the built application from the build stage
+COPY --from=build /app/out .
+
+# Copy dotnet sdk from .NET 6 SDK
+COPY --from=mcr.microsoft.com/dotnet/sdk:6.0 /usr/share/dotnet /usr/share/dotnet
+
+# Expose the port the app runs on
+EXPOSE 80
+
+# Set the entry point for the application
+ENTRYPOINT ["dotnet", "PlaygroundSilo.dll"]
