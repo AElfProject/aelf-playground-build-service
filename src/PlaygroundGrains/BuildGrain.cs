@@ -44,7 +44,7 @@ public class BuildGrain : ProcessGrain<BuildRequestDto, BuildResponseDto>, IBuil
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = "dotnet",
-                        Arguments = "build",
+                        Arguments = "build -p:RunAnalyzers=false",
                         WorkingDirectory = projectFolder,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
