@@ -64,10 +64,7 @@ public class TemplateGrain : ProcessGrain<TemplateRequestDto, TemplateResponseDt
         }
         finally
         {
-            if (Directory.Exists(_tempFolder))
-            {
-                Directory.Delete(_tempFolder, true);
-            }
+            DeactivateOnIdle();
         }
 
         return new TemplateResponseDto
@@ -75,6 +72,14 @@ public class TemplateGrain : ProcessGrain<TemplateRequestDto, TemplateResponseDt
             Status = false,
             Message = "Template failed"
         };
+    }
+
+    OnDeactivateAsync()
+    {
+        if (Directory.Exists(_tempFolder))
+        {
+            Directory.Delete(_tempFolder, true);
+        }
     }
 }
 

@@ -70,10 +70,7 @@ public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGra
         }
         finally
         {
-            if (Directory.Exists(_tempFolder))
-            {
-                Directory.Delete(_tempFolder, true);
-            }
+            DeactivateOnIdle();
         }
 
         return new TestResponseDto
@@ -81,6 +78,14 @@ public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGra
             Status = false,
             Message = "Test failed"
         };
+    }
+
+    OnDeactivateAsync()
+    {
+        if (Directory.Exists(_tempFolder))
+        {
+            Directory.Delete(_tempFolder, true);
+        }
     }
 }
 

@@ -97,10 +97,7 @@ public class BuildGrain : ProcessGrain<BuildRequestDto, BuildResponseDto>, IBuil
         }
         finally
         {
-            if (Directory.Exists(_tempFolder))
-            {
-                Directory.Delete(_tempFolder, true);
-            }
+            DeactivateOnIdle();
         }
 
         return new BuildResponseDto
@@ -108,6 +105,14 @@ public class BuildGrain : ProcessGrain<BuildRequestDto, BuildResponseDto>, IBuil
             Status = false,
             Message = "Build failed"
         };
+    }
+
+    OnDeactivateAsync()
+    {
+        if (Directory.Exists(_tempFolder))
+        {
+            Directory.Delete(_tempFolder, true);
+        }
     }
 }
 
