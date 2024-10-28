@@ -10,7 +10,6 @@ namespace Grains;
 
 public class BuildGrain : ProcessGrain<BuildRequestDto, BuildResponseDto>, IBuildGrain
 {
-    private string _tempFolder;
     protected override async Task<BuildResponseDto?> DoLongRunningWorkAsync()
     {
         try
@@ -50,7 +49,7 @@ public class BuildGrain : ProcessGrain<BuildRequestDto, BuildResponseDto>, IBuil
                     CreateNoWindow = true
                 }
             };
-            _cancellationToken.Register(() =>
+            _cancellation.Token.Register(() =>
             {
                 process.Kill();
             });
@@ -105,14 +104,6 @@ public class BuildGrain : ProcessGrain<BuildRequestDto, BuildResponseDto>, IBuil
             Status = false,
             Message = "Build failed"
         };
-    }
-
-    OnDeactivateAsync()
-    {
-        if (Directory.Exists(_tempFolder))
-        {
-            Directory.Delete(_tempFolder, true);
-        }
     }
 }
 

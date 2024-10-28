@@ -9,7 +9,6 @@ namespace Grains;
 
 public class TemplateGrain : ProcessGrain<TemplateRequestDto, TemplateResponseDto>, ITemplateGrain
 {
-    private string _tempFolder;
     protected override async Task<TemplateResponseDto?> DoLongRunningWorkAsync()
     {
         try
@@ -32,7 +31,7 @@ public class TemplateGrain : ProcessGrain<TemplateRequestDto, TemplateResponseDt
                     CreateNoWindow = true
                 }
             };
-            _cancellationToken.Register(() =>
+            _cancellation.Token.Register(() =>
             {
                 process.Kill();
             });
@@ -72,14 +71,6 @@ public class TemplateGrain : ProcessGrain<TemplateRequestDto, TemplateResponseDt
             Status = false,
             Message = "Template failed"
         };
-    }
-
-    OnDeactivateAsync()
-    {
-        if (Directory.Exists(_tempFolder))
-        {
-            Directory.Delete(_tempFolder, true);
-        }
     }
 }
 

@@ -10,7 +10,6 @@ namespace Grains;
 
 public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGrain
 {
-    private string _tempFolder;
     protected override async Task<TestResponseDto?> DoLongRunningWorkAsync()
     {
         try
@@ -50,7 +49,7 @@ public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGra
                     CreateNoWindow = true
                 }
             };
-            _cancellationToken.Register(() =>
+            _cancellation.Token.Register(() =>
             {
                 process.Kill();
             });
@@ -78,14 +77,6 @@ public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGra
             Status = false,
             Message = "Test failed"
         };
-    }
-
-    OnDeactivateAsync()
-    {
-        if (Directory.Exists(_tempFolder))
-        {
-            Directory.Delete(_tempFolder, true);
-        }
     }
 }
 

@@ -10,6 +10,7 @@ public class ProcessGrain<TRequest, TResponse> : Grain, IProcessGrain<TRequest, 
     protected Task<TResponse?> _myLongRunningTask;
     protected TRequest _request;
     protected CancellationTokenSource _cancellation = new CancellationTokenSource();
+    protected string _tempFolder;
 
     public Task StartAsync(TRequest request)
     {
@@ -51,5 +52,13 @@ public class ProcessGrain<TRequest, TResponse> : Grain, IProcessGrain<TRequest, 
     public Task<TResponse?> GetResultAsync()
     {
         return _myLongRunningTask;
+    }
+
+    void OnDeactivateAsync()
+    {
+        if (Directory.Exists(_tempFolder))
+        {
+            Directory.Delete(_tempFolder, true);
+        }
     }
 }
