@@ -1,0 +1,82 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Threading.Tasks;
+using GrainInterfaces;
+
+namespace Grains;
+
+public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGrain
+{
+    protected override async Task<TestResponseDto?> DoLongRunningWorkAsync()
+    {
+        try
+        {
+            var request = _request;
+            _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(_tempFolder);
+
+            await using var zipStream = new MemoryStream(request.ZipFile);
+            using var archive = new ZipArchive(zipStream);
+            archive.ExtractToDirectory(_tempFolder);
+
+            // find the first .csproj file that is a .Tests.csproj
+            var projectFile = Directory.GetFiles(_tempFolder, "*.csproj", SearchOption.AllDirectories)
+                .FirstOrDefault(file => file.Contains(".Tests.csproj"));
+
+            if (projectFile == null)
+            {
+                return new TestResponseDto
+                {
+                    Status = false,
+                    Message = "No project file found"
+                };
+            }
+
+            var projectFolder = Path.GetDirectoryName(projectFile);
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "test",
+                    WorkingDirectory = projectFolder,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            _cancellation.Token.Register(() =>
+            {
+                process.Kill();
+            });
+
+            process.Start();
+            process.WaitForExit();
+
+            return new TestResponseDto
+            {
+                Status = false,
+                Message = process.StandardOutput.ReadToEnd()
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            // cleanup
+        }
+        finally
+        {
+            DeactivateOnIdle();
+        }
+
+        return new TestResponseDto
+        {
+            Status = false,
+            Message = "Test failed"
+        };
+    }
+}
+
