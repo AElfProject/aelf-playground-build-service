@@ -38,12 +38,7 @@ public class ProcessGrain<TRequest, TResponse> : Grain, IProcessGrain<TRequest, 
     {
         try
         {
-            while (!_cancellation.Token.IsCancellationRequested)
-            {
-                // do some work
-                await Task.Delay(5000);
-                StopAsync();
-            }
+            await Task.Delay(5000);
         }
         catch (OperationCanceledException)
         {

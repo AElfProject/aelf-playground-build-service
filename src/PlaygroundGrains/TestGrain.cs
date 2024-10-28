@@ -15,55 +15,54 @@ public class TestGrain : ProcessGrain<TestRequestDto, TestResponseDto>, ITestGra
     {
         try
         {
-            while (!_cancellation.Token.IsCancellationRequested)
+            var request = _request;
+            _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(_tempFolder);
+
+            await using var zipStream = new MemoryStream(request.ZipFile);
+            using var archive = new ZipArchive(zipStream);
+            archive.ExtractToDirectory(_tempFolder);
+
+            // find the first .csproj file that is a .Tests.csproj
+            var projectFile = Directory.GetFiles(_tempFolder, "*.csproj", SearchOption.AllDirectories)
+                .FirstOrDefault(file => file.Contains(".Tests.csproj"));
+
+            if (projectFile == null)
             {
-                var request = _request;
-                _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-                Directory.CreateDirectory(_tempFolder);
-
-                await using var zipStream = new MemoryStream(request.ZipFile);
-                using var archive = new ZipArchive(zipStream);
-                archive.ExtractToDirectory(_tempFolder);
-
-                // find the first .csproj file that is a .Tests.csproj
-                var projectFile = Directory.GetFiles(_tempFolder, "*.csproj", SearchOption.AllDirectories)
-                    .FirstOrDefault(file => file.Contains(".Tests.csproj"));
-
-                if (projectFile == null)
-                {
-                    return new TestResponseDto
-                    {
-                        Status = false,
-                        Message = "No project file found"
-                    };
-                }
-
-                var projectFolder = Path.GetDirectoryName(projectFile);
-                var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "dotnet",
-                        Arguments = "test",
-                        WorkingDirectory = projectFolder,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.Start();
-                process.WaitForExit();
-
                 return new TestResponseDto
                 {
                     Status = false,
-                    Message = process.StandardOutput.ReadToEnd()
+                    Message = "No project file found"
                 };
-
-                StopAsync();
             }
+
+            var projectFolder = Path.GetDirectoryName(projectFile);
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "test",
+                    WorkingDirectory = projectFolder,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            _cancellationToken.Register(() =>
+            {
+                process.Kill();
+            });
+
+            process.Start();
+            process.WaitForExit();
+
+            return new TestResponseDto
+            {
+                Status = false,
+                Message = process.StandardOutput.ReadToEnd()
+            };
         }
         catch (OperationCanceledException)
         {

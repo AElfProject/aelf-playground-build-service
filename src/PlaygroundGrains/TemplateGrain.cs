@@ -14,50 +14,49 @@ public class TemplateGrain : ProcessGrain<TemplateRequestDto, TemplateResponseDt
     {
         try
         {
-            while (!_cancellation.Token.IsCancellationRequested)
+            var request = _request;
+            _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(_tempFolder);
+
+            // inside the temp folder, run the command "dotnet new aelf -n <templateName>"
+            var process = new Process
             {
-                var request = _request;
-                _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-                Directory.CreateDirectory(_tempFolder);
-
-                // inside the temp folder, run the command "dotnet new aelf -n <templateName>"
-                var process = new Process
+                StartInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "dotnet",
-                        Arguments = $"new {request.Template} -n {request.TemplateName}",
-                        WorkingDirectory = _tempFolder,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.Start();
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
-                {
-                    return new TemplateResponseDto
-                    {
-                        Status = false,
-                        Message = "Template creation failed"
-                    };
+                    FileName = "dotnet",
+                    Arguments = $"new {request.Template} -n {request.TemplateName}",
+                    WorkingDirectory = _tempFolder,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
                 }
+            };
+            _cancellationToken.Register(() =>
+            {
+                process.Kill();
+            });
 
-                var zipBytes = ZipUtilities.ZipFolderToByteArray(_tempFolder);
+            process.Start();
+            process.WaitForExit();
 
+            if (process.ExitCode != 0)
+            {
                 return new TemplateResponseDto
                 {
-                    Status = true,
-                    Message = "Template created",
-                    ZipFile = zipBytes
+                    Status = false,
+                    Message = "Template creation failed"
                 };
-
-                StopAsync();
             }
+
+            var zipBytes = ZipUtilities.ZipFolderToByteArray(_tempFolder);
+
+            return new TemplateResponseDto
+            {
+                Status = true,
+                Message = "Template created",
+                ZipFile = zipBytes
+            };
         }
         catch (OperationCanceledException)
         {
